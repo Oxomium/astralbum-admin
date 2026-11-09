@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Seuls les fichiers de cette page et le serveur Supabase sont autorisés (aucun script ni style d'un autre site). -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://pwxdryzvcvsavnapmxfs.supabase.co; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Astralbum – Administration</title>
+  <link rel="stylesheet" href="admin.css">
+  <script src="config.js"></script>
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Astralbum <span>Administration</span></h1>
+    <div id="compte" hidden>
+      <span id="compte-email"></span>
+      <button id="deconnexion" type="button" class="discret">Me déconnecter</button>
+    </div>
+  </header>
+  <main id="contenu">
+    <p class="aide">Chargement…</p>
+  </main>
+  <div id="message" role="status" aria-live="polite" hidden></div>
+  <noscript>Cette page a besoin de JavaScript.</noscript>
+</body>
+</html>

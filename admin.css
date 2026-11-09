@@ -1,0 +1,50 @@
+/* Astralbum – page d'administration : mêmes couleurs que le jeu. */
+:root {
+  --fond: #0e0c22; --carte: #16142b; --surface: #221c4f; --bordure: #433a8c; --texte: #f4f2ff; --doux: #c9c6e8;
+  --or: #ffab36; --bleu: #5aa9ff; --violet: #b783ff; --vert: #5fe3c0; --rouge: #ff5a6e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fond); color: var(--texte); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 12px 18px; background: var(--surface); border-bottom: 1px solid var(--bordure); }
+h1 { margin: 0; font-size: 20px; color: var(--or); }
+h1 span { color: var(--texte); font-weight: 600; margin-left: 6px; }
+#compte { display: flex; gap: 10px; align-items: center; color: var(--doux); font-size: 13px; }
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+h2 { margin: 0 0 8px; font-size: 19px; }
+h3 { margin: 0 0 6px; font-size: 16px; color: var(--violet); }
+.carte { background: var(--carte); border: 1px solid var(--bordure); border-radius: 14px; padding: 14px; margin: 12px 0; }
+.carte.etroite { max-width: 460px; margin: 30px auto; }
+.carte.alerte { border-color: var(--rouge); }
+.carte.fiche { border-color: var(--bleu); }
+.carte.signalement h3 { color: var(--or); }
+.aide { color: var(--doux); font-size: 13.5px; margin: 4px 0 10px; }
+.vide { text-align: center; font-weight: 700; margin-top: 40px; }
+.erreur-texte { color: var(--rouge); font-weight: 700; }
+.ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ligne > input { flex: 1 1 220px; }
+.ligne.entre { justify-content: space-between; flex-wrap: nowrap; }
+input[type="text"], textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--bordure); background: var(--fond); color: var(--texte); font: inherit; margin: 4px 0 10px; }
+input.code { font-size: 26px; letter-spacing: 8px; text-align: center; max-width: 220px; display: block; margin: 8px auto 12px; }
+textarea.reponse { font-size: 13px; color: var(--doux); }
+button { font: inherit; font-weight: 700; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--bordure); background: var(--surface); color: var(--texte); cursor: pointer; margin: 2px 0; }
+button:hover:not(:disabled) { border-color: var(--violet); }
+button:disabled { opacity: .45; cursor: default; }
+button.principal { background: var(--bleu); border-color: var(--bleu); color: #0e0c22; }
+button.danger { background: var(--rouge); border-color: var(--rouge); color: #0e0c22; }
+button.discret { padding: 5px 10px; font-size: 13px; }
+.onglets { display: flex; gap: 6px; border-bottom: 1px solid var(--bordure); margin-bottom: 8px; overflow-x: auto; }
+.onglets button { border-radius: 10px 10px 0 0; border-bottom: none; background: transparent; color: var(--doux); }
+.onglets button[aria-selected="true"] { background: var(--surface); color: var(--or); }
+dl { display: grid; grid-template-columns: 150px 1fr; gap: 4px 10px; margin: 8px 0 0; }
+dt { color: var(--doux); font-size: 13.5px; }
+dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.etiquettes { display: flex; flex-wrap: wrap; gap: 6px; }
+.etiquette { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.etiquette.rouge { color: var(--rouge); } .etiquette.bleu { color: var(--bleu); } .etiquette.or { color: var(--or); } .etiquette.vert { color: var(--vert); }
+.qr { display: block; width: 210px; height: 210px; margin: 8px auto; background: #fff; border-radius: 10px; padding: 8px; }
+.cle { font-family: ui-monospace, monospace; text-align: center; overflow-wrap: anywhere; color: var(--or); }
+.case { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+.resultat { white-space: pre-wrap; background: var(--carte); border: 1px solid var(--vert); border-radius: 10px; padding: 12px; font: inherit; }
+#message { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: 92vw; background: var(--surface); border: 1px solid var(--vert); border-radius: 10px; padding: 10px 16px; box-shadow: 0 6px 24px #0008; }
+#message.erreur { border-color: var(--rouge); }
+@media (max-width: 520px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } .ligne.entre { flex-wrap: wrap; } }
