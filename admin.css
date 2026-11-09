@@ -48,3 +48,29 @@ dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 #message { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: 92vw; background: var(--surface); border: 1px solid var(--vert); border-radius: 10px; padding: 10px 16px; box-shadow: 0 6px 24px #0008; }
 #message.erreur { border-color: var(--rouge); }
 @media (max-width: 520px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } .ligne.entre { flex-wrap: wrap; } }
+select { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--bordure); background: var(--fond); color: var(--texte); }
+.tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 6px 0 16px; }
+.tuile { display: flex; flex-direction: column; gap: 2px; text-align: left; background: var(--carte); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px; margin: 0; font-weight: 400; }
+button.tuile { cursor: pointer; }
+.tuile .valeur { font-size: 28px; font-weight: 800; color: var(--or); line-height: 1.1; }
+.tuile .libelle { font-weight: 700; }
+.tuile .detail, td .detail { display: block; color: var(--doux); font-size: 12.5px; font-weight: 400; }
+.tuile.alerte { border-color: var(--rouge); } .tuile.alerte .valeur { color: var(--rouge); }
+.liste-simple { margin: 0 0 12px; padding-left: 20px; }
+table.journal { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.journal th { text-align: left; color: var(--doux); font-weight: 600; border-bottom: 1px solid var(--bordure); padding: 6px; }
+table.journal td { border-bottom: 1px solid #2a2450; padding: 7px 6px; vertical-align: top; overflow-wrap: anywhere; }
+table.journal tr.connexion td { color: var(--bleu); }
+table.journal tr.rembourse td { color: var(--rouge); }
+main { max-width: 900px; }
+table.achats td:nth-child(3) { white-space: nowrap; }
+@media (max-width: 520px) { table.journal { font-size: 12.5px; } table.actions th:last-child, table.actions td:last-child { display: none; } }
+
+/* Contestations (migration 0101) */
+.carte.trouve { border-color: var(--or); }
+.quantites { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; }
+.quantites label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--doux); }
+input[type="number"] { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--bordure); background: var(--fond); color: var(--texte); font: inherit; }
+button.petit { margin-top: 6px; padding: 5px 10px; font-size: 12.5px; }
+table.journal tr.message-jeu td { color: var(--bleu); }
+@media (max-width: 520px) { .quantites { grid-template-columns: 1fr; } }
