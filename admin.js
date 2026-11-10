@@ -187,6 +187,22 @@
 
   // ─── Appels aux fonctions du serveur ──────────────────────────────────────────────────────────────────────
 
+  // Identifiant de ce navigateur, tiré au hasard une fois et gardé (localStorage) : le serveur n'envoie l'e-mail
+  // d'alerte que pour un appareil ou un navigateur jamais vu (connexion inhabituelle). Rien de personnel dedans.
+  function identifiantAppareil() {
+    const cle = 'astralbum_admin_appareil';
+    try {
+      let id = window.localStorage.getItem(cle);
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id || '')) {
+        id = crypto.randomUUID();
+        window.localStorage.setItem(cle, id);
+      }
+      return id;
+    } catch {
+      return null; // stockage refusé (navigation privée stricte) : connexion traitée comme inhabituelle
+    }
+  }
+
   async function rpc(fonction, parametres = {}) {
     const j = await jeton();
     if (!j) {
@@ -888,7 +904,7 @@
     const s = lireSession();
     if (decoder(j).aal !== 'aal2' || !s?.code_verifie_le || Date.now() - s.code_verifie_le > DUREE_CODE_MS) return ecranCode();
     try {
-      await rpc('admin_verifier');
+      await rpc('admin_verifier', { p_appareil: identifiantAppareil() });
     } catch (e) {
       return surErreur(e);
     }
