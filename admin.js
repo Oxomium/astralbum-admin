@@ -480,6 +480,7 @@
     supprimer_compte: 'Compte supprimé', sanction_pseudo: 'Pseudo sanctionné', classer_signalements: 'Signalements classés sans suite',
     message_exemple: 'Message à tous : exemple envoyé', message_tous: 'Message à tous : envoi lancé', lever_gel: 'Gel levé',
     offrir: 'Ajouté au compte', annuler_avertissement: 'Avertissement annulé', annuler_sanction: 'Sanction de pseudo annulée',
+    testeur: 'Compte de test donné', retirer_testeur: 'Compte de test retiré',
   };
 
   // « 5 booster(s), 1 Nuit(s) claire(s) »
@@ -622,6 +623,21 @@
       f.gel_statut ? carteGel(f, montrer) : null,
       carteAchats(f.liste_achats, f, montrer),
       carteOffrir(f, montrer),
+      carteDroit('Compte de test',
+        f.testeur
+          ? 'Ce compte a les outils de test dans le jeu ; il n\'apparaît dans aucun classement et n\'enregistre pas de '
+            + 'premières observations. Retirer ce statut retire aussi ses amis simulés (essais d\'échanges).'
+          : 'Donne à ce compte les outils de test dans le jeu (boosters, monnaies, niveau du télescope, amis simulés…). '
+            + 'Un compte de test n\'apparaît dans aucun classement et n\'enregistre pas de premières observations.',
+        f.testeur
+          ? bouton('Retirer le statut de compte de test', async () => {
+              if (!window.confirm(`Retirer le statut de compte de test de ${pseudo} ?`)) return;
+              apresAction(await rpc('admin_testeur', { p_joueur: id, p_testeur: false }), montrer);
+            })
+          : bouton('En faire un compte de test', async () => {
+              if (!window.confirm(`Faire de ${pseudo} un compte de test ? Il quittera les classements.`)) return;
+              apresAction(await rpc('admin_testeur', { p_joueur: id, p_testeur: true }), montrer);
+            }, 'principal')),
       carteHistorique(f, montrer),
       carteDroit('Accès et portabilité',
         'Le joueur veut une copie de ses données. Elle part par e-mail, à l\'adresse de son compte (jamais à une autre), '
