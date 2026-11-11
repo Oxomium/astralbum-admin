@@ -17,6 +17,7 @@ h3 { margin: 0 0 6px; font-size: 16px; color: var(--violet); }
 .carte.alerte { border-color: var(--rouge); }
 .carte.fiche { border-color: var(--bleu); }
 .carte.signalement h3 { color: var(--or); }
+.carte.suspect h3 { color: var(--rouge); }
 .aide { color: var(--doux); font-size: 13.5px; margin: 4px 0 10px; }
 .vide { text-align: center; font-weight: 700; margin-top: 40px; }
 .erreur-texte { color: var(--rouge); font-weight: 700; }

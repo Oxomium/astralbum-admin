@@ -431,6 +431,7 @@
       const a = d?.achats_mois || {};
       const sg = d?.signalements || {};
       const echecs = Number(d?.emails_en_echec || 0);
+      const suspects = Number(d?.suspects || 0);
       const limite = sg.premier_efface_le ? new Date(sg.premier_efface_le) : null;
       const signalementsUrgents = limite && limite - Date.now() < 14 * 86400000;
       const produits = Object.entries(a.par_produit || {}).sort((x, y) => y[1] - x[1]);
@@ -444,6 +445,9 @@
           tuile(nombre(sg.pseudos), 'pseudos signalés à traiter', {
             alerte: signalementsUrgents, onglet: 'signalements',
             detail: limite ? `le plus ancien : avant le ${date(sg.premier_efface_le)}` : null,
+          }),
+          tuile(nombre(suspects), 'joueurs à surveiller (triche)', {
+            alerte: suspects > 0, onglet: 'signalements', detail: 'activité suspecte, 30 derniers jours',
           }),
           tuile(nombre(echecs), 'e-mails en échec', { alerte: echecs > 0, detail: echecs > 0 ? 'réessayés toutes les heures' : null }),
           tuile(nombre(j.geles), 'comptes gelés', { detail: `${nombre(j.bloques)} bloqué(s), ${nombre(j.suspendus)} suspendu(s)` })),
@@ -529,6 +533,9 @@
   let fiche = null;
   let commande = null; // recherche par numéro de commande Google : {numero, achats, supprime}
 
+  // Pseudo à chercher en ouvrant l'onglet Joueurs (bouton « Ouvrir sa fiche » d'un autre onglet).
+  let rechercheDemandee = null;
+
   function ongletJoueurs() {
     const racine = el('div');
     const champ = el('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: 'E-mail, pseudo ou n° de commande (GPA.…)',
@@ -547,6 +554,11 @@
       montrer();
     }, 'principal');
     champ.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') chercher.click(); });
+    if (rechercheDemandee) {
+      champ.value = rechercheDemandee;
+      rechercheDemandee = null;
+      setTimeout(() => chercher.click(), 0);
+    }
     racine.append(
       el('p', { class: 'aide' }, 'Un joueur te demande quelque chose sur ses données ? Vérifie d\'abord que sa demande '
         + 'vient bien de l\'adresse e-mail de son compte, puis cherche-le ici. Une contestation d\'achat ? Colle le numéro '
@@ -832,9 +844,47 @@
     racine.append(
       el('p', { class: 'aide' }, 'Pseudos signalés. Les signalements sont effacés 6 mois après leur envoi : traite-les avant.'),
       el('div', { class: 'ligne' }, el('label', { class: 'aide' }, 'Trier : '), choixTri, bouton('Actualiser', charger)),
-      liste);
+      liste,
+      sectionActivitesSuspectes());
     charger().catch(surErreur);
     return racine;
+  }
+
+  // Activité suspecte aux observations (migration 0114) : joueurs arrivés à la 3e fois d'un même jour (observation
+  // manuelle en moins de 5 s par étape en moyenne, note d'au moins 90 %), sur les 30 derniers jours.
+  function sectionActivitesSuspectes() {
+    const liste = el('div', {}, el('p', { class: 'aide' }, 'Chargement…'));
+    const pct = (x) => `${Math.round(Number(x || 0) * 100)} %`;
+    const secondes = (x) => `${Number(x || 0).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`;
+    const charger = async () => {
+      const r = await rpc('admin_activites_suspectes');
+      const j = Array.isArray(r?.joueurs) ? r.joueurs : [];
+      liste.replaceChildren(...(j.length === 0
+        ? [el('p', { class: 'vide' }, 'Aucun joueur à surveiller.')]
+        : j.map((x) => {
+          const pseudo = String(x.pseudo);
+          const etiquettes = [];
+          if (x.suspendu) etiquettes.push(['Suspendu', 'rouge']);
+          if (x.testeur) etiquettes.push(['Compte de test', 'vert']);
+          const dernieres = Array.isArray(x.dernieres) ? x.dernieres : [];
+          return el('section', { class: 'carte suspect' },
+            el('h3', {}, pseudo),
+            etiquettes.length ? el('div', { class: 'etiquettes' }, etiquettes.map(([t, c]) => el('span', { class: `etiquette ${c}` }, t))) : null,
+            el('p', { class: 'aide' }, `${x.total_30j} activité(s) suspecte(s) en 30 jours, dont ${x.jours} jour(s) à 3 fois ou plus · dernière le ${date(x.dernier, true)}`),
+            el('ul', { class: 'liste-simple' }, dernieres.map((a) => el('li', {},
+              `${date(a.le, true)} : ${a.rang}e fois du jour, ${a.etapes} étape(s), ${secondes(a.duree_moyenne_s)} par étape, note ${pct(a.note)}`))),
+            el('div', { class: 'ligne' }, bouton('Ouvrir sa fiche', () => { rechercheDemandee = pseudo; ouvrirOnglet('joueurs'); })));
+        })));
+    };
+    const section = el('div', {},
+      el('h3', {}, 'Activité suspecte aux observations'),
+      el('p', { class: 'aide' }, 'Joueurs qui ont fini au moins 3 observations manuelles le même jour en moins de 5 secondes '
+        + 'par étape en moyenne, avec une note d\'au moins 90 %. Le jeu les bloque déjà quelques minutes à chaque fois ; '
+        + 'à toi de décider s\'il faut suspendre le compte (fiche du joueur).'),
+      el('div', { class: 'ligne' }, bouton('Actualiser', charger)),
+      liste);
+    charger().catch(surErreur);
+    return section;
   }
 
   // Message à tous les joueurs
