@@ -319,6 +319,24 @@
     await demarrer();
   }
 
+  // Le serveur donne le QR code sous la forme « data:image/svg+xml;utf-8,<svg …> », avec le dessin écrit tel quel.
+  // Or un « # » (les couleurs du dessin, « #ffffff ») coupe une adresse : le navigateur ne lisait que le début du
+  // dessin, et le QR code ne s'affichait pas. Le dessin est donc relu puis réécrit en entier dans une adresse sûre.
+  // Rend '' si ce n'est pas un dessin SVG (rien n'est alors affiché ; la clé écrite en dessous reste utilisable).
+  function adresseImageQr(qr) {
+    const m = /^data:image\/svg\+xml([^,]*),([\s\S]*)$/.exec(String(qr || ''));
+    if (!m) return '';
+    let dessin = m[2];
+    try {
+      if (/;base64/i.test(m[1])) dessin = new TextDecoder().decode(Uint8Array.from(atob(dessin), (c) => c.charCodeAt(0)));
+      else if (!dessin.trimStart().startsWith('<')) dessin = decodeURIComponent(dessin);
+    } catch (_) {
+      return '';
+    }
+    if (!/^\s*<svg[\s>]/i.test(dessin)) return '';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(dessin);
+  }
+
   // Première connexion : enregistrer Google Authenticator (QR code à scanner).
   async function ecranActivation(utilisateur) {
     const j = await jeton();
@@ -334,7 +352,8 @@
     }
     const qr = String(facteur?.totp?.qr_code || '');
     const image = el('img', { alt: 'QR code à scanner avec Google Authenticator', class: 'qr' });
-    if (/^data:image\/svg\+xml/.test(qr)) image.src = qr;
+    const adresseQr = adresseImageQr(qr);
+    if (adresseQr) image.src = adresseQr;
     const champ = champCode();
     afficher(el('section', { class: 'carte etroite' },
       el('h2', {}, 'Activer le code à 6 chiffres'),
