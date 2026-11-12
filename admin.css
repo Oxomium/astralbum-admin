@@ -44,6 +44,7 @@ dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 .etiquette.rouge { color: var(--rouge); } .etiquette.bleu { color: var(--bleu); } .etiquette.or { color: var(--or); } .etiquette.vert { color: var(--vert); }
 .qr { display: block; width: 210px; height: 210px; margin: 8px auto; background: #fff; border-radius: 10px; padding: 8px; }
 .cle { font-family: ui-monospace, monospace; text-align: center; overflow-wrap: anywhere; color: var(--or); }
+.cle span { display: inline-block; margin: 0 0.35em; letter-spacing: 0.08em; font-size: 1.15em; }
 .case { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
 .resultat { white-space: pre-wrap; background: var(--carte); border: 1px solid var(--vert); border-radius: 10px; padding: 12px; font: inherit; }
 #message { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: 92vw; background: var(--surface); border: 1px solid var(--vert); border-radius: 10px; padding: 10px 16px; box-shadow: 0 6px 24px #0008; }

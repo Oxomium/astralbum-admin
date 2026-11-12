@@ -319,22 +319,42 @@
     await demarrer();
   }
 
-  // Le serveur donne le QR code sous la forme « data:image/svg+xml;utf-8,<svg …> », avec le dessin écrit tel quel.
-  // Or un « # » (les couleurs du dessin, « #ffffff ») coupe une adresse : le navigateur ne lisait que le début du
-  // dessin, et le QR code ne s'affichait pas. Le dessin est donc relu puis réécrit en entier dans une adresse sûre.
-  // Rend '' si ce n'est pas un dessin SVG (rien n'est alors affiché ; la clé écrite en dessous reste utilisable).
+  // Le serveur (Supabase) donne le QR code comme un dessin SVG brut (« <?xml …?><svg …> »), ou selon les versions
+  // « data:img/svg+xml;utf-8,… » (type d'image mal écrit), avec des « # » dans les couleurs qui coupent une adresse.
+  // La page n'acceptait que « data:image/svg+xml » : le QR code ne s'affichait pas. Le dessin est relu, vérifié (c'est bien
+  // un dessin SVG), puis réécrit en entier dans une adresse d'image correcte. Rend '' sinon (la clé écrite sous le QR
+  // code reste utilisable).
   function adresseImageQr(qr) {
-    const m = /^data:image\/svg\+xml([^,]*),([\s\S]*)$/.exec(String(qr || ''));
-    if (!m) return '';
-    let dessin = m[2];
-    try {
-      if (/;base64/i.test(m[1])) dessin = new TextDecoder().decode(Uint8Array.from(atob(dessin), (c) => c.charCodeAt(0)));
-      else if (!dessin.trimStart().startsWith('<')) dessin = decodeURIComponent(dessin);
-    } catch (_) {
-      return '';
+    const texte = String(qr || '');
+    let dessin;
+    if (texte.trimStart().startsWith('<')) {
+      // dessin SVG brut (réponse directe du serveur : c'est la bibliothèque JavaScript de Supabase, que cette page
+      // n'utilise pas, qui y ajoute d'habitude le début « data:… »)
+      dessin = texte;
+    } else {
+      const m = /^data:(?:image|img)\/svg\+xml([^,]*),([\s\S]*)$/i.exec(texte);
+      if (!m) return '';
+      dessin = m[2];
+      try {
+        if (/;base64/i.test(m[1])) dessin = new TextDecoder().decode(Uint8Array.from(atob(dessin), (c) => c.charCodeAt(0)));
+        else if (!dessin.trimStart().startsWith('<')) dessin = decodeURIComponent(dessin);
+      } catch (_) {
+        return '';
+      }
     }
-    if (!/^\s*<svg[\s>]/i.test(dessin)) return '';
+    // en-tête XML, déclaration de type et commentaires avant le dessin : retirés
+    dessin = dessin.replace(/^\s*(?:<\?xml[^>]*\?>\s*|<!DOCTYPE[^>]*>\s*|<!--[\s\S]*?-->\s*)*/i, '');
+    if (!/^<svg[\s>]/i.test(dessin)) return '';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(dessin);
+  }
+
+  // Clé de configuration écrite par blocs de 4 caractères (plus facile à recopier sur le téléphone). Les blocs sont
+  // séparés par une marge, pas par des espaces : un copier-coller donne la clé exacte.
+  function cleEnBlocs(secret) {
+    const cle = String(secret || '').replace(/\s+/g, '').toUpperCase();
+    const p = el('p', { class: 'cle' });
+    for (let i = 0; i < cle.length; i += 4) p.appendChild(el('span', {}, cle.slice(i, i + 4)));
+    return p;
   }
 
   // Première connexion : enregistrer Google Authenticator (QR code à scanner).
@@ -362,8 +382,10 @@
         el('li', {}, 'Dans l\'application, touche « + », puis « Scanner un code QR », et scanne ce code :'),
       ),
       image,
-      el('p', { class: 'aide' }, 'Sans appareil photo : « Saisir une clé de configuration », avec cette clé :'),
-      el('p', { class: 'cle' }, String(facteur?.totp?.secret || '')),
+      el('p', { class: 'aide' }, 'Sans appareil photo : « Saisir une clé de configuration », type « Basée sur l\'heure », '
+        + 'avec cette clé (sans les espaces). Elle ne contient que des lettres et les chiffres 2 à 7 : « O » est la lettre O, '
+        + 'jamais le chiffre zéro, et « I » la lettre I, jamais le chiffre un.'),
+      cleEnBlocs(facteur?.totp?.secret),
       el('ol', { start: '3' }, el('li', {}, 'Écris ici le code à 6 chiffres affiché par l\'application :')),
       champ,
       bouton('Activer', () => verifierCode(facteur.id, champ, true), 'principal'),
