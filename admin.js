@@ -473,6 +473,8 @@
       const sg = d?.signalements || {};
       const echecs = Number(d?.emails_en_echec || 0);
       const suspects = Number(d?.suspects || 0);
+      const ct = d?.contestations || {};
+      const contestations = Array.isArray(ct.liste) ? ct.liste : [];
       const limite = sg.premier_efface_le ? new Date(sg.premier_efface_le) : null;
       const signalementsUrgents = limite && limite - Date.now() < 14 * 86400000;
       const produits = Object.entries(a.par_produit || {}).sort((x, y) => y[1] - x[1]);
@@ -491,6 +493,10 @@
             alerte: suspects > 0, onglet: 'signalements', detail: 'activité suspecte, 30 derniers jours',
           }),
           tuile(nombre(echecs), 'e-mails en échec', { alerte: echecs > 0, detail: echecs > 0 ? 'réessayés toutes les heures' : null }),
+          tuile(nombre(ct.total_30j), 'contestations bancaires (30 jours)', {
+            alerte: Number(ct.sans_reponse || 0) > 0,
+            detail: Number(ct.sans_reponse || 0) > 0 ? `${nombre(ct.sans_reponse)} sans réponse reçue par Google (délai : 24 h)` : 'réponse automatique à Google',
+          }),
           tuile(nombre(j.geles), 'comptes gelés', { detail: `${nombre(j.bloques)} bloqué(s), ${nombre(j.suspendus)} suspendu(s)` })),
         el('h3', {}, 'Joueurs'),
         el('div', { class: 'tuiles' },
@@ -506,6 +512,12 @@
         produits.length
           ? el('ul', { class: 'liste-simple' }, produits.map(([p, n]) => el('li', {}, `${nomProduit(p)} : ${nombre(n)}`)))
           : el('p', { class: 'aide' }, 'Aucun achat ce mois-ci.'),
+        contestations.length ? el('h3', {}, 'Contestations bancaires des 30 derniers jours') : null,
+        contestations.length ? el('p', { class: 'aide' }, 'Un joueur a contesté un paiement auprès de sa banque. Le serveur a répondu seul à Google : '
+          + 'refus demandé si l\'achat a servi, remboursement accepté s\'il n\'a pas servi, sans avis s\'il ne peut rien affirmer. '
+          + 'C\'est Google, puis la banque, qui décident. Si le joueur obtient gain de cause, l\'achat apparaît ensuite comme remboursé.') : null,
+        contestations.length ? el('ul', { class: 'liste-simple' }, contestations.map((c) => el('li', {},
+          `${c.commande}${c.produit ? ` (${nomProduit(c.produit)})` : ''}${c.pseudo ? `, ${c.pseudo}` : ''} : ${texteContestation(c)}`))) : null,
         el('p', { class: 'aide' }, precedente
           ? `Connexion précédente à l'administration : ${date(precedente.le, true)}${precedente.ip ? ` (adresse IP ${precedente.ip})` : ''}. Pas toi ? Regarde le journal.`
           : 'Première connexion à l\'administration.'));
@@ -744,6 +756,26 @@
       }, 'principal'));
   }
 
+  // Contestation bancaire d'un achat : ce que le serveur a répondu à Google (migration 0128).
+  const PREFERENCES = { DECLINE: 'refus demandé', APPROVE: 'remboursement accepté', NEUTRAL: 'sans avis' };
+  const CAS_CONTESTATION = {
+    inconnu: 'achat introuvable', compte_supprime: 'compte supprimé', deja_rembourse: 'achat déjà remboursé',
+    desactive: 'réponses désactivées',
+  };
+  function texteContestation(c) {
+    const part = c.part_milli === null || c.part_milli === undefined ? null
+      : `${(Number(c.part_milli) / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % utilisé`;
+    const morceaux = [`Contestation bancaire reçue le ${date(c.le, true)}`];
+    if (c.cas === 'desactive') morceaux.push('aucune réponse envoyée (réponses désactivées)');
+    else {
+      morceaux.push(`réponse à Google : ${PREFERENCES[c.preference] || c.preference}`);
+      if (part) morceaux.push(part);
+      if (CAS_CONTESTATION[c.cas]) morceaux.push(CAS_CONTESTATION[c.cas]);
+      morceaux.push(c.repondu_le ? `envoyée le ${date(c.repondu_le, true)}` : `PAS ENCORE REÇUE PAR GOOGLE${c.erreur ? ` (${c.erreur})` : ''}`);
+    }
+    return morceaux.join(' · ');
+  }
+
   // Tableau d'achats (fiche, ou recherche par numéro de commande). Avec [f], un avertissement peut être annulé.
   function tableAchats(liste, f, montrer) {
     return el('table', { class: 'journal achats' },
@@ -761,7 +793,8 @@
                 + 'Un gel éventuel reste à lever à part.')) return;
               apresAction(await rpc('admin_annuler_avertissement', { p_joueur: String(f.id), p_achat: Number(a.id) }), montrer);
             }, 'petit') : null]
-          : a.etat === 'annule' ? 'Annulé' : 'Crédité')))));
+          : a.etat === 'annule' ? 'Annulé' : 'Crédité',
+        a.contestation ? el('span', { class: 'detail' }, texteContestation(a.contestation)) : null)))));
   }
 
   // Les 30 derniers achats du joueur (gardés 15 mois) : remboursements et avertissements.
